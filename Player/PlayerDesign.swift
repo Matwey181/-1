@@ -9,7 +9,15 @@ public struct QwelExportedView: View {
     public var playing: Bool
     public var trackTitle: String
     public var artist: String
-    public init(page: Int = 0, elapsed: String = "0:00", total: String = "0:00", progress: CGFloat = 0, playing: Bool = false, trackTitle: String = "Название трека", artist: String = "Название группы") {
+    public var onSeek: (Double) -> Void
+    public var onToggle: () -> Void
+    public var onPrevious: () -> Void
+    public var onNext: () -> Void
+    public var onImport: () -> Void
+    public var onLibrary: () -> Void
+    public var onOptions: () -> Void
+    public var onBookmark: (Int) -> Void
+    public init(page: Int = 0, elapsed: String = "0:00", total: String = "0:00", progress: CGFloat = 0, playing: Bool = false, trackTitle: String = "Название трека", artist: String = "Название группы", onSeek: @escaping (Double) -> Void = { _ in }, onToggle: @escaping () -> Void = {}, onPrevious: @escaping () -> Void = {}, onNext: @escaping () -> Void = {}, onImport: @escaping () -> Void = {}, onLibrary: @escaping () -> Void = {}, onOptions: @escaping () -> Void = {}, onBookmark: @escaping (Int) -> Void = { _ in }) {
         self.page = page
         self.elapsed = elapsed
         self.total = total
@@ -17,9 +25,17 @@ public struct QwelExportedView: View {
         self.playing = playing
         self.trackTitle = trackTitle
         self.artist = artist
+        self.onSeek = onSeek
+        self.onToggle = onToggle
+        self.onPrevious = onPrevious
+        self.onNext = onNext
+        self.onImport = onImport
+        self.onLibrary = onLibrary
+        self.onOptions = onOptions
+        self.onBookmark = onBookmark
     }
     public var body: some View {
-        Group { switch page { case 0: ZStack(alignment: .topLeading) { Color.white; layer0_0; layer0_1; layer0_2; layer0_3; layer0_4; PlaybackWaveform(progress: progress).frame(width: 300, height: 32).position(x: 180, y: 526); layer0_8; layer0_9; layer0_10; layer0_11; layer0_12; layer0_13; layer0_14; layer0_15; if playing { HStack(spacing: 8) { Capsule().fill(Color.white).frame(width: 9, height: 29); Capsule().fill(Color.white).frame(width: 9, height: 29) }.frame(width: 36, height: 36).position(x: 180, y: 652) } else { layer0_16 }; layer0_17; layer0_18; layer0_19; layer0_20; layer0_21; layer0_22; layer0_23; layer0_24; layer0_25; layer0_26 }.frame(width: 360.0, height: 800.0).clipped()
+        Group { switch page { case 0: ZStack(alignment: .topLeading) { Color.white; layer0_0; layer0_1; layer0_2; layer0_3; layer0_4; PlaybackWaveform(progress: progress, playing: playing, onSeek: onSeek).position(x: 180, y: 526); layer0_8; layer0_9; layer0_10.onTapGesture(perform: onLibrary); layer0_11.onTapGesture(perform: onLibrary); layer0_12.onTapGesture(perform: onOptions); layer0_13.onTapGesture(perform: onPrevious); layer0_14.allowsHitTesting(false); layer0_15.onTapGesture(perform: onToggle); if playing { HStack(spacing: 8) { Capsule().fill(Color.white).frame(width: 9, height: 29); Capsule().fill(Color.white).frame(width: 9, height: 29) }.frame(width: 36, height: 36).position(x: 180, y: 652).allowsHitTesting(false) } else { layer0_16.allowsHitTesting(false) }; layer0_17.onTapGesture(perform: onNext); layer0_18.allowsHitTesting(false); layer0_19; layer0_20.onTapGesture { onBookmark(0) }; layer0_21.onTapGesture { onBookmark(1) }; layer0_22.onTapGesture { onBookmark(2) }; layer0_23.onTapGesture { onBookmark(3) }; layer0_24.onTapGesture(perform: onImport); layer0_25.allowsHitTesting(false); layer0_26.allowsHitTesting(false) }.frame(width: 360.0, height: 800.0).clipped()
         default: Color.clear.frame(width: 360.0, height: 800.0)
         } }
     }

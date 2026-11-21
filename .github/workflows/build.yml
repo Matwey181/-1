@@ -1,0 +1,43 @@
+name: Build iOS IPA
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate demo music
+        run: |
+          python3 - <<'PY'
+          import wave, math, struct, os
+          os.makedirs('Player',exist_ok=True)
+          rate=22050
+          melody=[(261.63,.4),(329.63,.4),(392,.4),(523.25,.7),(392,.4),(329.63,.4),(293.66,.4),(349.23,.7),(329.63,.4),(261.63,.7)]
+          with wave.open('Player/demo.wav','wb') as w:
+              w.setnchannels(1);w.setsampwidth(2);w.setframerate(rate)
+              for _ in range(5):
+                  for freq,sec in melody:
+                      n=int(rate*sec)
+                      for i in range(n):
+                          env=min(1,i/(rate*.02), (n-i)/(rate*.07))
+                          v=int(8000*env*(math.sin(2*math.pi*freq*i/rate)+.22*math.sin(4*math.pi*freq*i/rate)))
+                          w.writeframesraw(struct.pack('<h',max(-32768,min(32767,v))))
+          PY
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build app
+        run: |
+          xcodebuild -project Player.xcodeproj -scheme Player -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/Player.app Payload/
+          zip -qr Player-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Player-unsigned-IPA
+          path: Player-unsigned.ipa

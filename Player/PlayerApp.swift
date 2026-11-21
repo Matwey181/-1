@@ -29,7 +29,7 @@ struct OriginalPlayerScreen: View {
             ZStack(alignment: .topLeading) {
                 QwelExportedView(elapsed: formatted(currentTime),
                                  total: formatted(duration),
-                                 seekX: sliderStart + (sliderEnd - sliderStart) * fraction,
+                                 seekX: sliderStart + (sliderEnd - sliderStart) * CGFloat(fraction),
                                  playing: isPlaying)
                     .allowsHitTesting(false)
 

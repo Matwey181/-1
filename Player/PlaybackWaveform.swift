@@ -75,8 +75,3 @@ struct PlaybackWaveform: View {
     }
 }
 
-private extension Path {
-    func trimmedPath(from start: CGFloat, to end: CGFloat) -> Path {
-        self.trimmedPath(from: start, to: end)
-    }
-}

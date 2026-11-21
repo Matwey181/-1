@@ -1,0 +1,19 @@
+name: Player
+options:
+  bundleIdPrefix: com.matwey181
+targets:
+  Player:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Player
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.matwey181.demoPlayer
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UIBackgroundModes: audio
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        SWIFT_VERSION: 5.0
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic

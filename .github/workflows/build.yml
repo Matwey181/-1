@@ -35,7 +35,8 @@ jobs:
         run: test -s Player/PlayerDesign.swift
       - name: Build app
         run: |
-          xcodebuild -project Player.xcodeproj -scheme Player -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+          set -o pipefail
+          xcodebuild -project Player.xcodeproj -scheme Player -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build 2>&1 | tee xcode-build.log
       - name: Verify demo music is included
         run: |
           APP=build/Build/Products/Release-iphoneos/Player.app
@@ -59,3 +60,44 @@ jobs:
         run: |
           TAG="player-ios-${GITHUB_RUN_NUMBER}"
           gh release create "$TAG" Player-unsigned.ipa --target "$GITHUB_SHA" --title "Player iOS #${GITHUB_RUN_NUMBER}" --notes "Unsigned iPhone IPA. Sign before installation." --prerelease
+
+      - name: Record the actual build result in the repository
+        if: always() && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: |
+          python3 - <<'PY'
+          import os, pathlib
+          log = pathlib.Path('xcode-build.log')
+          lines = log.read_text(errors='replace').splitlines() if log.exists() else ['Xcode build step never started']
+          errors = [line for line in lines if 'error:' in line.lower() or '** BUILD FAILED **' in line]
+          success = pathlib.Path('Player-unsigned.ipa').exists()
+          report = [
+              '# Player iOS build result',
+              '',
+              f"Source commit: `{os.environ['GITHUB_SHA']}`",
+              f"Workflow run: https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
+              f"Result: {'SUCCESS - IPA created' if success else 'FAILURE - IPA not created'}",
+              '',
+              '## Compiler errors (if any)',
+              '```',
+              *(errors[:60] or ['No compiler errors recorded']),
+              '```',
+              '',
+              '## Final build output',
+              '```',
+              *lines[-25:],
+              '```',
+          ]
+          pathlib.Path('BUILD_STATUS.md').write_text('\n'.join(report) + '\n')
+          PY
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "$GITHUB_SHA" ]; then
+            echo "Newer commit already exists; skipping obsolete build status."
+            exit 0
+          fi
+          git checkout -B build-report origin/main
+          git add BUILD_STATUS.md
+          git commit -m "[skip ci] Store verified iOS build outcome"
+          git push origin HEAD:main

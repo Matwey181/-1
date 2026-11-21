@@ -34,13 +34,13 @@ struct OriginalPlayerScreen: View {
                     .allowsHitTesting(false)
 
                 // Transparent interaction regions leave the original exported design intact.
-                Rectangle().fill(Color.clear).contentShape(Rectangle())
+                Color.black.opacity(0.001).contentShape(Rectangle())
                     .frame(width: 312, height: 46)
                     .position(x: 180, y: 526)
                     .gesture(DragGesture(minimumDistance: 0)
                         .onChanged { value in
                             isSeeking = true
-                            seek(to: value.location.x / 312)
+                            seek(to: (value.location.x - 6) / 300)
                         }
                         .onEnded { value in
                             seek(to: value.location.x / 312)

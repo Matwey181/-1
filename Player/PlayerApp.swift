@@ -45,16 +45,18 @@ struct OriginalPlayerScreen: View {
             if !dragging { player.refresh() }
         }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.audio], allowsMultipleSelection: true) { result in
-            switch result {
-            case .success(let urls):
-                do { try player.importAudio(urls) }
-                catch {
+            Task { @MainActor in
+                switch result {
+                case .success(let urls):
+                    do { try player.importAudio(urls) }
+                    catch {
+                        errorText = error.localizedDescription
+                        showingError = true
+                    }
+                case .failure(let error):
                     errorText = error.localizedDescription
                     showingError = true
                 }
-            case .failure(let error):
-                errorText = error.localizedDescription
-                showingError = true
             }
         }
         .sheet(isPresented: $showingLibrary) {

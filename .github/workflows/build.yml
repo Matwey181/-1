@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: macos-15
@@ -34,6 +36,11 @@ jobs:
       - name: Build app
         run: |
           xcodebuild -project Player.xcodeproj -scheme Player -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: Verify demo music is included
+        run: |
+          APP=build/Build/Products/Release-iphoneos/Player.app
+          test -d "$APP"
+          test -n "$(find "$APP" -type f -name demo.wav -print -quit)"
       - name: Package unsigned IPA
         run: |
           mkdir -p Payload
@@ -43,3 +50,12 @@ jobs:
         with:
           name: Player-unsigned-IPA
           path: Player-unsigned.ipa
+
+      - name: Publish downloadable IPA release
+        if: github.ref == 'refs/heads/main'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="player-ios-${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" Player-unsigned.ipa --target "$GITHUB_SHA" --title "Player iOS #${GITHUB_RUN_NUMBER}" --notes "Unsigned iPhone IPA. Sign before installation." --prerelease
